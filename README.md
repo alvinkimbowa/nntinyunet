@@ -60,47 +60,23 @@ Run nnU-Net planning and preprocessing:
 nnUNetv2_plan_and_preprocess -d DATASET_ID --verify_dataset_integrity -c 2d
 ```
 
-This writes the preprocessed dataset and generates an `nnUNetPlans.json` file under:
-
-```text
-$nnUNet_preprocessed/DatasetXXX_MyDataset/
-```
-
 ## 4. Get XTinyU-Net Config
 
-4.1 U-Net downscaling
+Run the full XTinyU-Net configuration search with one command:
 
 ```bash
-uv run python src/generate_candidate_configs.py --plans /path/to/nnUNetPlans.json
-```
-
-Example:
-
-```bash
-uv run python src/generate_candidate_configs.py \
-  --plans "$nnUNet_preprocessed/Dataset300_MyDataset/nnUNetPlans.json"
-```
-
-4.2 Run the input-output sensitivity scoring of the generated configs.
-
-```bash
-NUM_SAMPLES="all"
-uv run python src/score_net.py \
-  --train_dataset_id DATASET_ID \
-  --plans nnUNetPlans \
-  --trainer nnUNetTrainer \
-  --num_samples "${NUM_SAMPLES}"
-```
-
-4.3 Estimate the collapse boundary and select the XTinyU-Net config:
-
-```bash
-uv run python src/get_xtiny_config.py \
+uv run python src/derive_xtiny_config.py \
   --dataset_id DATASET_ID \
-  --num_samples "${NUM_SAMPLES}"
+  --plans nnUNetPlans \
+  --trainer nnUNetTrainer
 ```
 
-This returns the XTinyU-Net config.
+This command:
+
+- generates candidate XTinyU-Net configurations and saves the in `$nnUNet_preprocessed/DatasetXXX_MyDataset/nnUNetPlans.json`,
+- scores the generated configs,
+- estimates the collapse boundary and returns the selected XTinyU-Net config.
+
 
 ## 5. Train With nnU-Net
 
@@ -169,4 +145,3 @@ If you use this work, please cite:
 	keywords = {Computer Science - Computer Vision and Pattern Recognition, Electrical Engineering and Systems Science - Image and Video Processing}
 }
 ```
-
