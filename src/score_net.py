@@ -398,7 +398,7 @@ def score_config(args, cfg, device, metric_set):
     if jacobian_scores:
         jac_arr = np.asarray(jacobian_scores, dtype=np.float64)
         jac_arr = jac_arr[np.isfinite(jac_arr)]
-        jacobian_avg = float(np.sqrt(np.mean(jac_arr * jac_arr, dtype=np.float64))) if jac_arr.size else float("nan")
+        jacobian_avg = float(np.mean(jac_arr, dtype=np.float64)) if jac_arr.size else float("nan")
     else:
         jacobian_avg = float("nan")
     
@@ -476,7 +476,6 @@ def score_config(args, cfg, device, metric_set):
 
 
 def main(args):
-    set_seed(args.seed)
     device = torch.device("cpu" if args.gpu < 0 else "cuda")
     metric_set = {m.strip().lower() for m in args.metrics if m.strip()}
     os.makedirs(args.out_dir, exist_ok=True)
@@ -486,6 +485,7 @@ def main(args):
     if not cfgs:
         raise RuntimeError("No 2d_xtiny configs found. Run src/generate_candidate_configs.py first.")
     for cfg in cfgs:
+        set_seed(args.seed)
         score_config(args, cfg, device, metric_set)
 
 
