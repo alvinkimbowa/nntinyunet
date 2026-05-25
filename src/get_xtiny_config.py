@@ -70,48 +70,32 @@ def relative_change(values):
     return [math.nan] + [abs(values[i] - values[i - 1]) for i in range(1, len(values))]
 
 
-def knee_index_tv_slopes(x, y, drop=0, include_hinge_in_both_lines=False):
+def knee_index_tv_slopes(x, y):
     x0 = np.asarray(x, dtype=float)
     y0 = np.asarray(y, dtype=float)
+    base_idx = np.arange(len(x), dtype=int)
 
-    if drop > 0:
-        x0 = x0[drop:]
-        y0 = y0[drop:]
-        base_idx = np.arange(len(x), dtype=int)[drop:]
-    else:
-        base_idx = np.arange(len(x), dtype=int)
+    x0 = x0[::-1]
+    y0 = y0[::-1]
+    base_idx = base_idx[::-1]
+    
+    # Compute local variation in sensitivity between consecutive configurations
+    d = np.abs(np.diff(y0))
 
-    valid = np.isfinite(x0) & (x0 > 0) & np.isfinite(y0)
-    if valid.sum() < 5:
-        return None
-
-    xlog = np.log10(x0[valid])
-    yv = y0[valid]
-    idxv = base_idx[valid]
-
-    s = np.diff(yv) / np.diff(xlog)
-    if len(s) < 2:
-        return None
-
-    r = np.abs(np.diff(s))
-    n = len(xlog)
+    n = len(x)
     best_k_local = None
     best_score = -np.inf
 
     for k_local in range(2, n - 2):
-        if include_hinge_in_both_lines:
-            left = r[:k_local]
-            right = r[k_local - 1:]
-        else:
-            left = r[: k_local - 1]
-            right = r[k_local - 1:]
+        pre = d[:k_local]
+        post = d[k_local - 1:]
 
-        if len(left) == 0 or len(right) == 0:
+        if len(post) == 0 or len(pre) == 0:
             continue
 
-        L = np.mean(left)
-        R = np.mean(right)
-        score = L - R
+        pre_tv = np.mean(pre)
+        post_tv = np.mean(post)
+        score = post_tv - pre_tv
         if np.isfinite(score) and score > best_score:
             best_score = score
             best_k_local = k_local
@@ -119,11 +103,12 @@ def knee_index_tv_slopes(x, y, drop=0, include_hinge_in_both_lines=False):
     if best_k_local is None:
         return None
 
-    return int(idxv[best_k_local])
+    return int(base_idx[best_k_local - 1])
 
 
 def select_xtiny_config(configs, params, values):
-    selected_idx = knee_index_tv_slopes(params, relative_change(values))
+    print("configs: ", configs)
+    selected_idx = knee_index_tv_slopes(params, values)
     if selected_idx is None:
         raise RuntimeError("Could not select XTiny config from sensitivity curve")
     return configs[selected_idx]
