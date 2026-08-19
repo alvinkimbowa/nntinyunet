@@ -8,6 +8,7 @@ dependencies = [
     "monai>=1.6.0",
     "nnunetv2==2.7.0",
     "torch>=2.12.0",
+    "torchprofile>=0.1.0",
     "torchvision>=0.27.0",
 ]
 
